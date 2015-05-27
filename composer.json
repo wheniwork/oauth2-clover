@@ -1,0 +1,43 @@
+{
+    "name": "wheniwork/oauth2-clover",
+    "description": "Clover OAuth 2.0 Client Provider for The PHP League OAuth2-Client",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Woody Gilk",
+            "email": "woody.gilk@gmail.com",
+            "homepage": "https://github.com/shadowhand"
+        },
+        {
+            "name": "Daniel Olfelt",
+            "email": "dolfelt@gmail.com",
+            "homepage": "https://github.com/dolfelt"
+        }
+    ],
+    "keywords": [
+        "oauth",
+        "oauth2",
+        "client",
+        "authorization",
+        "authorisation",
+        "clover"
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "league/oauth2-client": "~0.11"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.0",
+        "mockery/mockery": "~0.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wheniwork\\OAuth2\\Client\\Provider\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Wheniwork\\OAuth2\\Client\\Test\\Provider\\": "tests/src/"
+        }
+    }
+}

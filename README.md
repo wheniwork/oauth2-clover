@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/packagist/l/wheniwork/oauth2-clover.svg)](https://github.com/wheniwork/oauth2-clover/blob/master/LICENSE)
 [![Latest Stable Version](https://img.shields.io/packagist/v/wheniwork/oauth2-clover.svg)](https://packagist.org/packages/wheniwork/oauth2-clover)
 
-This package provides Clover OAuth 2.0 support for the PHP League's [OAuth 2.0 Client](https://github.com/thephpleague/oauth2-client).
+This package provides [Clover OAuth 2.0](https://demo1.dev.clover.com/docs/oauth) support for the PHP League's [OAuth 2.0 Client](https://github.com/thephpleague/oauth2-client).
 
 ## Installation
 

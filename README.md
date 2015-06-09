@@ -51,15 +51,27 @@ if (!isset($_GET['code'])) {
         'code' => $_GET['code']
     ]);
 
-    // Clover does not provide a way to get information about the currently
-    // authenticated user. (If you know of a way, please let me know!)
+    // Optional: Now you have a token you can look up a users profile data
+    try {
+
+        // We got an access token, let's now get the user's details
+        $userDetails = $provider->getUserDetails($token);
+
+        // Use these details to create a new profile
+        printf('Hello %s!', $userDetails->name);
+
+    } catch (Exception $e) {
+
+        // Failed to get user details
+        exit('Oh dear...');
+    }
 
     // Use this to interact with an API on the users behalf
     echo $token->accessToken;
+
 }
 ```
 
 ## Refreshing a Token
 
 Clover does not use refresh tokens.
-

@@ -57,14 +57,41 @@ class CloverTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('.mock_prefix', $uri['host']);
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testUrlUserDetails()
     {
         $token = new AccessToken(['access_token' => 'fake']);
 
         $url = $this->provider->urlUserDetails($token);
+
+        $this->assertContains('employees/current', $url);
+    }
+
+    public function testUserData()
+    {
+        $getResponse = m::mock('Guzzle\Http\Message\Response');
+        $getResponse->shouldReceive('getBody')->times(4)->andReturn(
+            '{"id": "ABCDE", "name": "mock_name", "email": "mock_email", "role": "EMPLOYEE"}'
+        );
+
+        $client = m::mock('Guzzle\Service\Client');
+        $client->shouldReceive('setBaseUrl')->times(4);
+        $client->shouldReceive('setDefaultOption')->times(4);
+        $client->shouldReceive('get->send')->times(4)->andReturn($getResponse);
+        $this->provider->setHttpClient($client);
+
+        $token = new AccessToken(['access_token' => 'mock_access_token']);
+        $user = $this->provider->getUserDetails($token);
+
+        $this->assertInstanceOf('Wheniwork\OAuth2\Client\Provider\CloverEmployee', $user);
+
+        $this->assertEquals('ABCDE', $this->provider->getUserUid($token));
+        $this->assertEquals('mock_name', $this->provider->getUserScreenName($token));
+        $this->assertEquals('mock_name', $user->name);
+        $this->assertEquals('mock_email', $this->provider->getUserEmail($token));
+        $this->assertEquals('EMPLOYEE', $user->role);
+        $this->assertTrue($user->isEmployee());
+        $this->assertFalse($user->isManager());
+        $this->assertFalse($user->isAdmin());
     }
 
     public function testGetAccessToken()

@@ -60,12 +60,15 @@ class Clover extends AbstractProvider
 
     public function urlUserDetails(AccessToken $token)
     {
-        throw new \RuntimeException('Clover does not provide details for authenticated users');
+        return $this->getApiUrl('merchants/current/employees/current');
     }
 
     public function userDetails($response, AccessToken $token)
     {
-        return [];
+        // Ensure the response is converted to an array, recursively
+        $response = json_decode(json_encode($response), true);
+        $user = new CloverEmployee($response);
+        return $user;
     }
 
     /**

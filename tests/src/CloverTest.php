@@ -2,8 +2,8 @@
 
 namespace Wheniwork\OAuth2\Client\Test\Provider;
 
-use Wheniwork\OAuth2\Client\Provider\Clover;
 use League\OAuth2\Client\Token\AccessToken;
+use Wheniwork\OAuth2\Client\Provider\Clover;
 
 use Mockery as m;
 
@@ -37,75 +37,56 @@ class CloverTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('redirect_uri', $query);
         $this->assertArrayHasKey('state', $query);
         $this->assertArrayHasKey('response_type', $query);
-        $this->assertNotNull($this->provider->state);
+        $this->assertNotNull($this->provider->getState());
     }
 
-    public function testUrlAuthorize()
+    public function testBaseAccessTokenUrl()
     {
-        $url = $this->provider->urlAuthorize();
-        $uri = parse_url($url);
-
-        $this->assertEquals('/oauth/authorize', $uri['path']);
-    }
-
-    public function testUrlAccessToken()
-    {
-        $url = $this->provider->urlAccessToken();
+        $url = $this->provider->getBaseAccessTokenUrl([]);
         $uri = parse_url($url);
 
         $this->assertEquals('/oauth/token', $uri['path']);
         $this->assertContains('.mock_prefix', $uri['host']);
     }
 
-    public function testUrlUserDetails()
+    public function testResourceOwnerDetailsUrl()
     {
         $token = new AccessToken(['access_token' => 'fake']);
 
-        $url = $this->provider->urlUserDetails($token);
+        $url = $this->provider->getResourceOwnerDetailsUrl($token);
 
         $this->assertContains('employees/current', $url);
     }
 
     public function testUserData()
     {
-        $getResponse = m::mock('Guzzle\Http\Message\Response');
-        $getResponse->shouldReceive('getBody')->times(4)->andReturn(
-            '{"id": "ABCDE", "name": "mock_name", "email": "mock_email", "role": "EMPLOYEE"}'
-        );
+        $response = json_decode('{"id": "ABCDE", "name": "mock_name", "email": "mock_email", "role": "EMPLOYEE"}', true);
 
-        $client = m::mock('Guzzle\Service\Client');
-        $client->shouldReceive('setBaseUrl')->times(4);
-        $client->shouldReceive('setDefaultOption')->times(4);
-        $client->shouldReceive('get->send')->times(4)->andReturn($getResponse);
-        $this->provider->setHttpClient($client);
+        $provider = m::mock('Wheniwork\OAuth2\Client\Provider\Clover[fetchResourceOwnerDetails]')
+            ->shouldAllowMockingProtectedMethods();
 
-        $token = new AccessToken(['access_token' => 'mock_access_token']);
-        $user = $this->provider->getUserDetails($token);
+        $provider->shouldReceive('fetchResourceOwnerDetails')
+            ->times(1)
+            ->andReturn($response);
 
-        $this->assertInstanceOf('Wheniwork\OAuth2\Client\Provider\CloverEmployee', $user);
+        $token = m::mock('League\OAuth2\Client\Token\AccessToken');
+        $user = $provider->getResourceOwner($token);
 
-        $this->assertEquals('ABCDE', $this->provider->getUserUid($token));
-        $this->assertEquals('mock_name', $this->provider->getUserScreenName($token));
-        $this->assertEquals('mock_name', $user->name);
-        $this->assertEquals('mock_email', $this->provider->getUserEmail($token));
-        $this->assertEquals('EMPLOYEE', $user->role);
+        $this->assertInstanceOf('League\OAuth2\Client\Provider\ResourceOwnerInterface', $user);
+
+        $this->assertEquals('ABCDE', $user->getId($token));
+        $this->assertEquals('mock_name', $user->getName());
+        $this->assertEquals('mock_email', $user->getEmail());
+        $this->assertEquals('EMPLOYEE', $user->getRole());
         $this->assertTrue($user->isEmployee());
         $this->assertFalse($user->isManager());
         $this->assertFalse($user->isAdmin());
-    }
 
-    public function testGetAccessToken()
-    {
-        $response = m::mock('Guzzle\Http\Message\Response');
-        $response->shouldReceive('getBody')->times(1)->andReturn('{"access_token": "mock_access_token"}');
+        $user = $user->toArray();
 
-        $client = m::mock('Guzzle\Service\Client');
-        $client->shouldReceive('setBaseUrl')->times(1);
-        $client->shouldReceive('get->send')->times(1)->andReturn($response);
-        $this->provider->setHttpClient($client);
-
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
-
-        $this->assertEquals('mock_access_token', $token->accessToken);
+        $this->assertArrayHasKey('id', $user);
+        $this->assertArrayHasKey('name', $user);
+        $this->assertArrayHasKey('email', $user);
+        $this->assertArrayHasKey('role', $user);
     }
 }

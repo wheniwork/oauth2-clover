@@ -2,44 +2,84 @@
 
 namespace Wheniwork\OAuth2\Client\Provider;
 
-class CloverEmployee 
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+
+class CloverEmployee implements ResourceOwnerInterface
 {
-    public $uid;
-    public $name;
-    public $email;
-    public $inviteSent;
-    public $claimedTime;
-    public $role;
+    /**
+     * @var array
+     */
+    protected $response;
 
-    public function __construct(array $attributes)
+    /**
+     * @param array $response
+     */
+    public function __construct(array $response)
     {
-        if (!empty($attributes['id'])) {
-            $this->uid = $attributes['id'];
-        }
-
-        $attributes = array_intersect_key($attributes, $this->toArray());
-        foreach ($attributes as $key => $value) {
-            $this->$key = $value;
-        }
+        $this->response = $response;
     }
 
-    public function isAdmin()
+    /**
+     * @inheritDoc
+     */
+    public function getId()
     {
-        return $this->role === 'ADMIN';
+        return $this->response['id'];
     }
 
-    public function isManager()
-    {
-        return $this->role === 'MANAGER';
-    }
-
-    public function isEmployee()
-    {
-        return $this->role === 'EMPLOYEE';
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function toArray()
     {
-        return get_object_vars($this);
+        return $this->response;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->response['name'];
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmail()
+    {
+        return $this->response['email'];
+    }
+
+    /**
+     * @return string
+     */
+    public function getRole()
+    {
+        return $this->response['role'];
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isAdmin()
+    {
+        return $this->getRole() === 'ADMIN';
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isManager()
+    {
+        return $this->getRole() === 'MANAGER';
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isEmployee()
+    {
+        return $this->getRole() === 'EMPLOYEE';
     }
 }

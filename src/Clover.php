@@ -4,19 +4,19 @@ namespace Wheniwork\OAuth2\Client\Provider;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
+use Psr\Http\Message\ResponseInterface;
 
 class Clover extends AbstractProvider
 {
+    use BearerAuthorizationTrait;
+
     /**
      * @var string
      */
-    public $marketPrefix;
+    protected $marketPrefix;
 
-    public $method = 'get';
-
-    public $authorizationHeader = 'Bearer';
-
-    public function __construct($options = [])
+    public function __construct(array $options = [], array $collaborators = [])
     {
         if (!empty($options['marketPrefix'])) {
             // Ensure that the market domain prefix always starts with a dot
@@ -24,7 +24,8 @@ class Clover extends AbstractProvider
                 $options['marketPrefix'] = '.' . $options['marketPrefix'];
             }
         }
-        parent::__construct($options);
+
+        parent::__construct($options, $collaborators);
     }
 
     /**
@@ -42,7 +43,7 @@ class Clover extends AbstractProvider
         );
     }
 
-    public function urlAuthorize()
+    public function getBaseAuthorizationUrl()
     {
         return sprintf(
             'https://www%s.clover.com/oauth/authorize',
@@ -50,7 +51,7 @@ class Clover extends AbstractProvider
         );
     }
 
-    public function urlAccessToken()
+    public function getBaseAccessTokenUrl(array $params)
     {
         return sprintf(
             'https://www%s.clover.com/oauth/token',
@@ -58,33 +59,28 @@ class Clover extends AbstractProvider
         );
     }
 
-    public function urlUserDetails(AccessToken $token)
+    public function getResourceOwnerDetailsUrl(AccessToken $token)
     {
         return $this->getApiUrl('merchants/current/employees/current');
     }
 
-    public function userDetails($response, AccessToken $token)
+    protected function getAccessTokenMethod()
     {
-        // Ensure the response is converted to an array, recursively
-        $response = json_decode(json_encode($response), true);
-        $user = new CloverEmployee($response);
-        return $user;
+        return static::METHOD_GET;
     }
 
-    /**
-     * Helper method that can be used to fetch API responses.
-     *
-     * @param  string      $path
-     * @param  AccessToken $token
-     * @param  boolean     $as_array
-     * @return array|object
-     */
-    public function getApiResponse($path, AccessToken $token, $as_array = true)
+    protected function getDefaultScopes()
     {
-        $url = $this->getApiUrl($path);
+        return [];
+    }
 
-        $headers = $this->getHeaders($token);
+    protected function checkResponse(ResponseInterface $response, $data)
+    {
+        // Clover does not seem to expose useful error information :(
+    }
 
-        return json_decode($this->fetchProviderData($url, $headers), $as_array);
+    protected function createResourceOwner(array $response, AccessToken $token)
+    {
+        return new CloverEmployee($response);
     }
 }
